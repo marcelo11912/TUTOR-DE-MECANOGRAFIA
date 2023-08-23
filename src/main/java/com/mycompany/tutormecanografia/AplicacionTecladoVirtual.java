@@ -33,10 +33,13 @@ class PanelTecladoVirtual extends JPanel {
     private JLabel pangramaActual;
     private List<String> pangramas;
     private Random random;
+    private int correctas;
+    private int incorrectas;
 
     public PanelTecladoVirtual() {
         setLayout(new BorderLayout());
-
+        correctas = 0;
+        incorrectas = 0;
         campoTexto = new JTextField(20);
         add(campoTexto, BorderLayout.NORTH);
 
@@ -50,10 +53,9 @@ class PanelTecladoVirtual extends JPanel {
             "A", "B", "C", "D", "E", "F", "G",
             "H", "I", "J", "K", "L", "M", "N",
             "O", "P", "Q", "R", "S", "T",
-            "U", "V", "W", "X", "Y", "Z"," ",
+            "U", "V", "W", "X", "Y", "Z", " ",
             "1", "2", "3", "4", "5", "6", "7",
-            "8", "9", "0", ".", ",", "*", "!", "?", ":", "Borrar", 
-        };
+            "8", "9", "0", ".", ",", "*", "!", "?", ":", "Borrar",};
 
         for (String etiquetaTecla : etiquetasTeclas) {
             JButton boton = new JButton(etiquetaTecla);
@@ -71,6 +73,14 @@ class PanelTecladoVirtual extends JPanel {
 
         random = new Random();
         mostrarPangramaAleatorio();
+    }
+
+    public void actualizarEstadisticas(boolean esCorrecto) {
+        if (esCorrecto) {
+            correctas++;
+        } else {
+            incorrectas++;
+        }
     }
 
     private List<String> cargarPangramasDesdeArchivo(String nombreArchivo) {
@@ -125,14 +135,11 @@ class EscuchadorBotonTecla implements ActionListener {
             String pangramaActual = panelTeclado.getPangramaActual();
             String textoUsuario = panelTeclado.getTextoUsuario();
             if (pangramaActual.startsWith(textoUsuario)) {
-                if (pangramaActual.equals(textoUsuario)) {
-                    // Usuario ha completado el pangrama actual
-                    panelTeclado.mostrarPangramaAleatorio();
-                    panelTeclado.campoTexto.setText("");
-                }
+                panelTeclado.actualizarEstadisticas(true);
+
             } else {
-                // Restablecer el campo de texto si el usuario comete un error
-                panelTeclado.campoTexto.setText("");
+                panelTeclado.actualizarEstadisticas(false);
+
             }
         }
     }
