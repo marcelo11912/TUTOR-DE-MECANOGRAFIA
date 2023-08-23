@@ -8,7 +8,9 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 public class AplicacionTecladoVirtual {
@@ -33,20 +35,20 @@ class PanelTecladoVirtual extends JPanel {
     private JLabel pangramaActual;
     private List<String> pangramas;
     private Random random;
-    private int correctas;
-    private int incorrectas;
+    private Map<Character, Integer> erroresPorTecla;
 
     public PanelTecladoVirtual() {
         setLayout(new BorderLayout());
-        correctas = 0;
-        incorrectas = 0;
+
         campoTexto = new JTextField(20);
         add(campoTexto, BorderLayout.NORTH);
 
         pangramaActual = new JLabel("");
         pangramaActual.setHorizontalAlignment(JLabel.CENTER);
         add(pangramaActual, BorderLayout.CENTER);
-
+        JButton botonInforme = new JButton("Mostrar Informe de Errores");
+        botonInforme.addActionListener(e -> mostrarInformeErrores());
+        add(botonInforme, BorderLayout.EAST);
         JPanel panelTeclado = new JPanel(new GridLayout(5, 7));
 
         String[] etiquetasTeclas = {
@@ -70,17 +72,10 @@ class PanelTecladoVirtual extends JPanel {
         System.out.println(currentDir);
 
         pangramas = cargarPangramasDesdeArchivo(filePath);
+        erroresPorTecla = new HashMap<>();
 
         random = new Random();
         mostrarPangramaAleatorio();
-    }
-
-    public void actualizarEstadisticas(boolean esCorrecto) {
-        if (esCorrecto) {
-            correctas++;
-        } else {
-            incorrectas++;
-        }
     }
 
     private List<String> cargarPangramasDesdeArchivo(String nombreArchivo) {
@@ -107,6 +102,32 @@ class PanelTecladoVirtual extends JPanel {
 
     public String getTextoUsuario() {
         return campoTexto.getText();
+    }
+
+    public void actualizarEstadisticas(boolean esCorrecto, char tecla) {
+        if (!esCorrecto) {
+            erroresPorTecla.put(tecla, erroresPorTecla.getOrDefault(tecla, 0) + 1);
+        }
+    }
+
+    public String generarInformeErrores(int umbral) {
+        StringBuilder informe = new StringBuilder("Teclas que se le dificultan al usuario:\n");
+        for (Map.Entry<Character, Integer> entry : erroresPorTecla.entrySet()) {
+                informe.append("Tecla: ").append(entry.getKey()).append(" - Errores: ").append(entry.getValue()).append("\n");
+            
+        }
+        return informe.toString();
+    }
+
+    public void mostrarInformeErrores() {
+        int umbral = 3; // Umbral de errores para mostrar en el informe
+        String informe = generarInformeErrores(umbral);
+
+        JTextArea areaTexto = new JTextArea(informe);
+        areaTexto.setEditable(false);
+        JScrollPane scrollPane = new JScrollPane(areaTexto);
+
+        JOptionPane.showMessageDialog(this, scrollPane, "Informe de Errores", JOptionPane.PLAIN_MESSAGE);
     }
 }
 
@@ -135,10 +156,11 @@ class EscuchadorBotonTecla implements ActionListener {
             String pangramaActual = panelTeclado.getPangramaActual();
             String textoUsuario = panelTeclado.getTextoUsuario();
             if (pangramaActual.startsWith(textoUsuario)) {
-                panelTeclado.actualizarEstadisticas(true);
+                panelTeclado.actualizarEstadisticas(true, e.getActionCommand().charAt(0));
 
             } else {
-                panelTeclado.actualizarEstadisticas(false);
+                System.out.println(panelTeclado.generarInformeErrores(3));
+                panelTeclado.actualizarEstadisticas(false, e.getActionCommand().charAt(0));
 
             }
         }
